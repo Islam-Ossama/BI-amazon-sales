@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project focuses on analyzing Amazon sales data in India for the year 2022 using SQL, Excel, Power BI, and Tableau to derive actionable insights. The goal is to identify sales trends, profit margins, and category performance to support business decision-making.
+This project focuses on analyzing Amazon sales data in India for the year 2022 using Power BI to derive actionable insights. The goal is to identify sales trends, profit margins, and category performance to support business decision-making.
 
 ## Table of Contents
 
@@ -34,10 +34,7 @@ This project focuses on analyzing Amazon sales data in India for the year 2022 u
 
 ## Prerequisites
 
-- SQL-compatible database (e.g., PostgreSQL, MySQL, SQLite)
-- SQL client (e.g., DBeaver, pgAdmin, or command-line interface)
-- Microsoft Excel for data preprocessing
-- Power BI Desktop and Tableau for visualization
+- Power BI Desktop for data analysis and visualization
 
 ## Setup
 
@@ -47,76 +44,67 @@ This project focuses on analyzing Amazon sales data in India for the year 2022 u
    git clone https://github.com/Islam-Ossama/BI-amazon-sales.git
    ```
 
-2. **Set Up the Database**:
+2. **Configure Power BI**:
 
-   - Import the dataset into your SQL database using the provided `Amazon Sale Report.csv`.
-
-   - Example for PostgreSQL:
-
-     ```bash
-     psql -U username -d amazon_sales_db -c "\copy sales_data FROM 'Amazon Sale Report.csv' DELIMITER ',' CSV HEADER;"
-     ```
-
-3. **Preprocess with Excel**:
-
-   - Open `Amazon Sale Report.csv` in Excel to clean data (e.g., handle missing `Amount` values, remove duplicates).
-   - Save the cleaned file for import into SQL or directly into Power BI/Tableau.
-
-4. **Configure Power BI and Tableau**:
-
-   - Open Power BI Desktop or Tableau, connect to your SQL database, and load the `sales_data` table.
-   - Alternatively, directly import the cleaned CSV file into Power BI or Tableau.
-
-5. **Configure Connection**:
-
-   - Update connection settings in your SQL client, Power BI, or Tableau (e.g., host, port, username, password).
+   - Open Power BI Desktop and import the `Amazon Sale Report.csv` file directly.
+   - Use Power BI's data transformation tools (Power Query Editor) to clean and prepare the data.
 
 ## Analysis Workflow
 
-1. **Data Cleaning**: Use Excel to handle missing values (e.g., `Amount` for cancelled orders), duplicates, and inconsistencies in `Status` and `Category`.
-2. **Exploratory Analysis**: Identify patterns in sales quantities, profit by category, and quarterly trends using SQL queries.
-3. **Query Development**: Write SQL queries to calculate total quantities sold, profit by category, and quarterly performance.
-4. **Visualization**: Import query results into Power BI and Tableau to create dashboards visualizing key metrics like total profit, category-wise sales, and size-wise profit distribution.
+1. **Data Cleaning**: Use Power BI's Power Query Editor to handle missing values (e.g., `Amount` for cancelled orders), duplicates, and inconsistencies in `Status` and `Category`.
+2. **Exploratory Analysis**: Leverage Power BI to identify patterns in sales quantities, profit by category, and quarterly trends through data modeling and DAX calculations.
+3. **Visualization**: Create interactive dashboards in Power BI to visualize key metrics like total profit, category-wise sales, and size-wise profit distribution.
 
 ## Key Queries
 
-Below are examples of SQL queries used in the analysis:
+In this project, analysis was performed directly in Power BI using DAX (Data Analysis Expressions) instead of SQL. Below are examples of DAX measures used for the analysis:
 
-- **Query 1**: Calculate total quantity sold by category
+- **Measure 1**: Calculate total quantity sold by category
 
-  ```sql
-  SELECT Category, SUM(Qty) AS total_quantity
-  FROM sales_data
-  GROUP BY Category
-  ORDER BY total_quantity DESC;
+  ```
+  Total Quantity by Category = 
+  CALCULATE(
+      SUM('sales_data'[Qty]),
+      ALLEXCEPT('sales_data', 'sales_data'[Category])
+  )
   ```
 
-- **Query 2**: Calculate total profit by category (using Amount as profit proxy for shipped orders)
+- **Measure 2**: Calculate total profit by category (using Amount as profit proxy for shipped orders)
 
-  ```sql
-  SELECT Category, SUM(Amount) AS total_profit
-  FROM sales_data
-  WHERE Status LIKE 'Shipped%'
-  GROUP BY Category
-  ORDER BY total_profit DESC;
+  ```
+  Total Profit by Category = 
+  CALCULATE(
+      SUM('sales_data'[Amount]),
+      'sales_data'[Status] IN {"Shipped", "Shipped - Delivered to Buyer"},
+      ALLEXCEPT('sales_data', 'sales_data'[Category])
+  )
   ```
 
-- **Query 3**: Quarterly sales quantity and amount
+- **Measure 3**: Quarterly sales quantity and amount
 
-  ```sql
-  SELECT 
-      CASE 
-          WHEN EXTRACT(MONTH FROM TO_DATE(Date, 'MM/DD/YYYY')) BETWEEN 1 AND 3 THEN 'Qtr 1'
-          WHEN EXTRACT(MONTH FROM TO_DATE(Date, 'MM/DD/YYYY')) BETWEEN 4 AND 6 THEN 'Qtr 2'
-          WHEN EXTRACT(MONTH FROM TO_DATE(Date, 'MM/DD/YYYY')) BETWEEN 7 AND 9 THEN 'Qtr 3'
-          ELSE 'Qtr 4'
-      END AS Quarter,
-      SUM(Qty) AS total_quantity,
-      SUM(Amount) AS total_amount
-  FROM sales_data
-  WHERE Status LIKE 'Shipped%'
-  GROUP BY Quarter
-  ORDER BY Quarter;
+  ```
+  Quarter = 
+  SWITCH(
+      TRUE(),
+      MONTH('sales_data'[Date]) <= 3, "Qtr 1",
+      MONTH('sales_data'[Date]) <= 6, "Qtr 2",
+      MONTH('sales_data'[Date]) <= 9, "Qtr 3",
+      "Qtr 4"
+  )
+  
+  Total Quantity by Quarter = 
+  CALCULATE(
+      SUM('sales_data'[Qty]),
+      'sales_data'[Status] IN {"Shipped", "Shipped - Delivered to Buyer"},
+      ALLEXCEPT('sales_data', 'sales_data'[Quarter])
+  )
+  
+  Total Amount by Quarter = 
+  CALCULATE(
+      SUM('sales_data'[Amount]),
+      'sales_data'[Status] IN {"Shipped", "Shipped - Delivered to Buyer"},
+      ALLEXCEPT('sales_data', 'sales_data'[Quarter])
+  )
   ```
 
 ## Results
@@ -125,7 +113,7 @@ Below are examples of SQL queries used in the analysis:
 - Total profit: ₹78.59M, with T-shirts contributing ₹39M.
 - Quarterly analysis shows a consistent increase in sales volume and amount throughout the year.
 - Size-wise profit distribution highlights M size as the highest contributor at ₹12.3M.
-- Power BI and Tableau dashboards were created to visualize these insights, including charts for category-wise sales, quarterly trends, and size-wise profit.
+- A Power BI dashboard was created to visualize these insights, including charts for category-wise sales, quarterly trends, and size-wise profit.
 
 ## Contributing
 
